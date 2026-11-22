@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VilcoLicense Hub</title>
+  <style>
+    :root { --bg:#0b0f17; --card:#131a26; --text:#e6edf3; --muted:#8b949e; --accent:#00e5a0; --danger:#ff5c77; --border:#222d3f; }
+    [data-theme="light"] { --bg:#f4f6f9; --card:#ffffff; --text:#111827; --muted:#6b7280; --accent:#059669; --danger:#dc2626; --border:#e5e7eb; }
+    * { box-sizing:border-box; font-family:system-ui,-apple-system,sans-serif; }
+    body { margin:0; background:var(--bg); color:var(--text); min-height:100vh; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--border); background:var(--card); }
+    .brand { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+    .badge { font-size:.75rem; padding:3px 8px; border-radius:99px; background:rgba(0,229,160,.15); color:var(--accent); }
+    .container { max-width:980px; margin:20px auto; padding:0 16px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px; }
+    input, select, textarea { width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); margin-bottom:10px; font-size:.95rem; }
+    button { padding:12px 16px; border-radius:10px; border:none; font-weight:600; cursor:pointer; background:var(--accent); color:#04130d; font-size:.95rem; }
+    button.secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
+    button.danger { background:var(--danger); color:#fff; }
+    .tabs { display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; }
+    .tab { padding:10px 16px; border-radius:10px; background:var(--card); border:1px solid var(--border); color:var(--muted); cursor:pointer; white-space:nowrap; }
+    .tab.active { border-color:var(--accent); color:var(--accent); font-weight:600; }
+    .row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); gap:12px; flex-wrap:wrap; }
+    .mono { font-family:ui-monospace,monospace; letter-spacing:.5px; }
+    .hidden { display:none !important; }
+    footer { text-align:center; padding:20px; color:var(--muted); font-size:.82rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">🛡️ VilcoLicense Hub <span id="brandBadge" class="badge">v1.0.0</span></div>
+    <div style="display:flex; gap:8px;">
+      <button class="secondary" onclick="toggleTheme()">🌓</button>
+      <button id="btnLogout" class="secondary hidden" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="loginBox" class="card" style="max-width:420px; margin:40px auto;">
+      <h2 style="margin-top:0;">Acceso Administrativo</h2>
+      <input id="u" placeholder="Usuario (admin / auditor)" />
+      <input id="p" type="password" placeholder="Contraseña" />
+      <button style="width:100%;" onclick="login()">Ingresar</button>
+      <p id="loginErr" style="color:var(--danger); font-size:.9rem;"></p>
+    </div>
+
+    <div id="appBox" class="hidden">
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('licenses', this)">🔑 Licencias</div>
+        <div class="tab" onclick="showTab('releases', this)">🚀 Versiones OTA</div>
+        <div class="tab" onclick="showTab('apps', this)">📱 Aplicaciones</div>
+        <div class="tab" onclick="showTab('audit', this)">📋 Auditoría</div>
+      </div>
+
+      <div id="tab-licenses">
+        <div class="card" id="newLicCard">
+          <h3 style="margin-top:0;">Generar Nueva Licencia</h3>
+          <select id="licApp"></select>
+          <input id="licCustomer" placeholder="Nombre del cliente o titular" />
+          <input id="licEmail" placeholder="Correo (opcional)" />
+          <input id="licMax" type="number" value="2" min="1" placeholder="Máximo de dispositivos" />
+          <input id="licExp" type="date" />
+          <button onclick="createLicense()">Generar Clave Robusta</button>
+          <p id="newKeyOut" class="mono" style="color:var(--accent); font-weight:700;"></p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">Licencias Emitidas</h3>
+          <div id="licList"></div>
+        </div>
+      </div>
+
+      <div id="tab-releases" class="hidden">
+        <div class="card" id="newRelCard">
+          <h3 style="margin-top:0;">Publicar Nueva Versión (OTA)</h3>
+          <select id="relApp"></select>
+          <select id="relPlat"><option value="android">Android (.apk)</option><option value="windows">Windows (.exe)</option></select>
+          <input id="relVer" placeholder="Versión (ej. 1.1.0)" />
+          <input id="relBuild" type="number" placeholder="Build Number (ej. 2)" />
+          <input id="relUrl" placeholder="URL directa GitHub Release (.apk / .exe)" />
+          <input id="relHash" placeholder="Hash SHA-256 (64 caracteres)" />
+          <textarea id="relLog" placeholder="Notas de cambios (changelog)"></textarea>
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <input id="relForce" type="checkbox" style="width:auto; margin:0;" /> Actualización obligatoria
+          </label>
+          <button onclick="createRelease()">Publicar Release</button>
+        </div>
+        <div class="card"><div id="relList"></div></div>
+      </div>
+
+      <div id="tab-apps" class="hidden">
+        <div class="card" id="newAppCard">
+          <h3 style="margin-top:0;">Registrar Nueva App</h3>
+          <input id="appCode" placeholder="Código único (ej. APP_CONTABLE)" />
+          <input id="appName" placeholder="Nombre comercial" />
+          <button onclick="createApp()">Registrar</button>
+        </div>
+        <div class="card"><div id="appList"></div></div>
+      </div>
+
+      <div id="tab-audit" class="hidden">
+        <div class="card"><div id="auditList"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footerMeta">Cargando...</footer>
+
+  <script>
+    let currentRole = 'auditor';
+    function toggleTheme() {
+      const h = document.documentElement;
+      h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+    async function api(url, opts = {}) {
+      const res = await fetch(url, { headers: {'Content-Type':'application/json'}, ...opts });
+      if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+      return res.json();
+    }
+    async function init() {
+      const meta = await api('/api/v1/public/meta');
+      document.getElementById('brandBadge').textContent = `v${meta.hub_version}`;
+      document.getElementById('footerMeta').textContent = `VilcoLicense Hub v${meta.hub_version} • Desarrollado por ${meta.brand}`;
+      try {
+        const me = await api('/api/admin/me');
+        enterApp(me.role);
+      } catch {}
+    }
+    async function login() {
+      try {
+        const res = await api('/api/admin/login', { method:'POST', body: JSON.stringify({ username: u.value, password: p.value }) });
+        enterApp(res.role);
+      } catch (e) { loginErr.textContent = e.message; }
+    }
+    async function logout() { await api('/api/admin/logout', { method:'POST' }); location.reload(); }
+    function enterApp(role) {
+      currentRole = role;
+      loginBox.classList.add('hidden'); appBox.classList.remove('hidden'); btnLogout.classList.remove('hidden');
+      if (role !== 'admin') { ['newLicCard','newRelCard','newAppCard'].forEach(id => document.getElementById(id).classList.add('hidden')); }
+      loadAll();
+    }
+    function showTab(name, el) {
+      ['licenses','releases','apps','audit'].forEach(t => document.getElementById('tab-'+t).classList.add('hidden'));
+      document.getElementById('tab-'+name).classList.remove('hidden');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+    async function loadAll() {
+      const apps = await api('/api/admin/apps');
+      const opts = apps.map(a => `<option value="${a.app_code}">${a.name} (${a.app_code})</option>`).join('');
+      licApp.innerHTML = opts; relApp.innerHTML = opts;
+      appList.innerHTML = apps.map(a => `<div class="row"><div><b>${a.name}</b> <span class="mono">(${a.app_code})</span></div></div>`).join('');
+
+      const lics = await api('/api/admin/licenses');
+      licList.innerHTML = lics.map(l => `
+        <div class="row">
+          <div>
+            <div class="mono" style="font-weight:700; color:var(--accent);">${l.license_key}</div>
+            <div style="font-size:.85rem; color:var(--muted);">${l.customer_name} • ${l.app_code} • Equipos: ${l.active_devices}/${l.max_devices} • ${l.status}</div>
+          </div>
+          ${currentRole === 'admin' ? `
+          <div style="display:flex; gap:6px;">
+            <button class="secondary" onclick="setStatus(${l.id}, '${l.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')">${l.status === 'ACTIVE' ? 'Suspender' : 'Activar'}</button>
+            <button class="danger" onclick="setStatus(${l.id}, 'REVOKED')">Revocar</button>
+          </div>` : ''}
+        </div>`).join('');
+
+      const rels = await api('/api/admin/releases');
+      relList.innerHTML = rels.map(r => `<div class="row"><div><b>${r.app_code} v${r.version}</b> (${r.platform} • build ${r.build_number})<div class="mono" style="font-size:.75rem; color:var(--muted);">SHA256: ${r.sha256_hash.slice(0,24)}...</div></div></div>`).join('') || '<p>Sin versiones publicadas.</p>';
+
+      const audits = await api('/api/admin/audit');
+      auditList.innerHTML = audits.map(a => `<div class="row"><div><b>${a.action}</b> por ${a.actor}<div style="font-size:.8rem; color:var(--muted);">${a.detail} • ${a.created_at}</div></div></div>`).join('');
+    }
+    async function createLicense() {
+      const res = await api('/api/admin/licenses', { method:'POST', body: JSON.stringify({ app_code: licApp.value, customer_name: licCustomer.value, customer_email: licEmail.value, max_devices: +licMax.value, expires_at: licExp.value || null }) });
+      newKeyOut.textContent = `Clave generada: ${res.license_key}`;
+      loadAll();
+    }
+    async function setStatus(id, status) { await api(`/api/admin/licenses/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) }); loadAll(); }
+    async function createRelease() {
+      await api('/api/admin/releases', { method:'POST', body: JSON.stringify({ app_code: relApp.value, platform: relPlat.value, version: relVer.value, build_number: +relBuild.value, download_url: relUrl.value, sha256_hash: relHash.value, changelog: relLog.value, force_update: relForce.checked }) });
+      loadAll();
+    }
+    async function createApp() {
+      await api('/api/admin/apps', { method:'POST', body: JSON.stringify({ app_code: appCode.value, name: appName.value }) });
+      loadAll();
+    }
+    init();
+  </script>
+</body>
+</html>
