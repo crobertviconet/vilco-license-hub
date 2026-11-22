@@ -19,7 +19,7 @@ from app.security import (
     verify_session_token,
 )
 
-app = FastAPI(title="VilcoLicense Hub", version="1.0.1")
+app = FastAPI(title="VilcoLicense Hub", version="1.0.2")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 os.makedirs(STATIC_DIR, exist_ok=True)
@@ -115,7 +115,7 @@ def public_meta():
         cfg = {dict(r)["key"]: dict(r)["value"] for r in rows}
         return {
             "brand": cfg.get("brand_name", "@VilcoSystem"),
-            "hub_version": cfg.get("hub_version", "1.0.1"),
+            "hub_version": cfg.get("hub_version", "1.0.2"),
             "ed25519_public_key_b64": PUBLIC_KEY_B64,
         }
     finally:

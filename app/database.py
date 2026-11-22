@@ -78,8 +78,6 @@ class LibSQLConnectionWrapper:
 
     def commit(self):
         self._conn.commit()
-        if self._is_turso and hasattr(self._conn, "sync"):
-            self._conn.sync()
 
     def close(self):
         if hasattr(self._conn, "close"):
@@ -198,11 +196,11 @@ def init_db():
         )
         db.execute(
             "INSERT OR IGNORE INTO config_params (key, value) VALUES (?, ?)",
-            ("hub_version", "1.0.1")
+            ("hub_version", "1.0.2")
         )
         db.execute(
             "UPDATE config_params SET value = ? WHERE key = ?",
-            ("1.0.1", "hub_version")
+            ("1.0.2", "hub_version")
         )
 
         db.execute(
