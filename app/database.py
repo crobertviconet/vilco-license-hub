@@ -82,7 +82,8 @@ class LibSQLConnectionWrapper:
             self._conn.sync()
 
     def close(self):
-        self._conn.close()
+        if hasattr(self._conn, "close"):
+            self._conn.close()
 
 
 def get_db() -> LibSQLConnectionWrapper:
@@ -197,7 +198,11 @@ def init_db():
         )
         db.execute(
             "INSERT OR IGNORE INTO config_params (key, value) VALUES (?, ?)",
-            ("hub_version", "1.0.0")
+            ("hub_version", "1.0.1")
+        )
+        db.execute(
+            "UPDATE config_params SET value = ? WHERE key = ?",
+            ("1.0.1", "hub_version")
         )
 
         db.execute(
