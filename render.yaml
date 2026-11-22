@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: vilco-license-hub
+    runtime: docker
+    plan: free
+    envVars:
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_INIT_PASSWORD
+        sync: false
+      - key: AUDITOR_INIT_PASSWORD
+        sync: false
+      - key: ED25519_PRIVATE_KEY_B64
+        sync: false
